@@ -66,6 +66,8 @@ type TestListResponse struct {
 	ScheduledAt     time.Time `json:"scheduled_at"`
 	IsDraft         bool      `json:"is_draft"`
 	CreatedAt       time.Time `json:"created_at"`
+	Comment         string    `json:"comment,omitempty"`
+	Score           *int      `json:"score,omitempty"`
 }
 
 // TestRepository テストリポジトリの構造体

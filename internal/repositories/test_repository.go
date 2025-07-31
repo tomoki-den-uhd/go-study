@@ -31,7 +31,7 @@ func (t *TestRepository) SelectTests(userID int, userRole string) ([]models.Test
 	var args []interface{}
 	
 	if userRole == "teacher" {
-		// 教師の場合：自分が作成したテストを取得
+		// 教師の場合：自分が作成したテストを取得（コメントは最初の学生のものを取得）
 		query = `
 			SELECT 
 				tt.teacher_test_id,
@@ -43,11 +43,28 @@ func (t *TestRepository) SelectTests(userID int, userRole string) ([]models.Test
 				u.name as teacher_name,
 				tt.scheduled_at,
 				tt.is_draft,
-				tt.created_at
+				tt.created_at,
+				COALESCE(st.comment, '') as comment,
+				st_score.score
 			FROM teacher_tests tt
 			JOIN courses c ON tt.course_id = c.course_id
 			JOIN subjects s ON c.subject_id = s.subject_id
 			JOIN users u ON c.teacher_user_id = u.user_id
+			LEFT JOIN LATERAL (
+				SELECT comment 
+				FROM student_tests 
+				WHERE teacher_test_id = tt.teacher_test_id 
+					AND comment IS NOT NULL 
+					AND comment != ''
+				LIMIT 1
+			) st ON true
+			LEFT JOIN LATERAL (
+				SELECT score 
+				FROM student_tests 
+				WHERE teacher_test_id = tt.teacher_test_id 
+					AND student_user_id = $1
+				LIMIT 1
+			) st_score ON true
 			WHERE tt.created_by = $1 
 				AND tt.is_deleted = false
 				AND c.is_deleted = false
@@ -69,12 +86,15 @@ func (t *TestRepository) SelectTests(userID int, userRole string) ([]models.Test
 				u.name as teacher_name,
 				tt.scheduled_at,
 				tt.is_draft,
-				tt.created_at
+				tt.created_at,
+				COALESCE(st.comment, '') as comment,
+				st.score
 			FROM teacher_tests tt
 			JOIN courses c ON tt.course_id = c.course_id
 			JOIN subjects s ON c.subject_id = s.subject_id
 			JOIN users u ON c.teacher_user_id = u.user_id
 			JOIN attendances a ON c.course_id = a.course_id
+			LEFT JOIN student_tests st ON tt.teacher_test_id = st.teacher_test_id AND st.student_user_id = $1
 			WHERE a.student_user_id = $1 
 				AND tt.is_deleted = false
 				AND c.is_deleted = false
@@ -112,6 +132,8 @@ func (t *TestRepository) SelectTests(userID int, userRole string) ([]models.Test
 			&test.ScheduledAt,
 			&test.IsDraft,
 			&test.CreatedAt,
+			&test.Comment,
+			&test.Score,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan test row: %w", err)
