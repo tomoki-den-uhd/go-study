@@ -55,7 +55,7 @@ func (s *UserService) ValidateUser(userID string) (int, error) {
 	}
 
 	// ユーザーの存在確認
-	exists, err := s.userRepo.UserExists(userIDInt)
+	exists, err := s.userRepo.ExistsUser(userIDInt)
 	if err != nil {
 		return 0, fmt.Errorf("failed to validate user: %w", err)
 	}

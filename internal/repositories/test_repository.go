@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tomoki-den-uhd/go-study/internal/models"
 )
 
 // TestRepository テストリポジトリの構造体
 type TestRepository struct {
-	DB *pgx.Conn
+	DB *pgxpool.Pool
 }
 
 // NewTestRepository テストリポジトリのコンストラクタ
-func NewTestRepository(db *pgx.Conn) *TestRepository {
+func NewTestRepository(db *pgxpool.Pool) *TestRepository {
 	return &TestRepository{DB: db}
 }
 

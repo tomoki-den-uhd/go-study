@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -32,12 +32,12 @@ func main() {
     // 接続文字列作成
     dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
 
-    // DB接続
-    conn, err := pgx.Connect(context.Background(), dsn)
+    // DB接続（pgxpool使用）
+    pool, err := pgxpool.New(context.Background(), dsn)
     if err != nil {
         log.Fatalf("Unable to connect to database: %v\n", err)
     }
-    defer conn.Close(context.Background())
+    defer pool.Close()
 
     fmt.Println("Successfully connected to database!")
 
@@ -50,14 +50,18 @@ func main() {
     e.Use(middleware.CORS())
 
     // 依存関係の注入
-    userRepo := repositories.NewUserRepository(conn)
-    testRepo := repositories.NewTestRepository(conn)
+    userRepo := repositories.NewUserRepository(pool)
+    testRepo := repositories.NewTestRepository(pool)
+    gradeRepo := repositories.NewGradeRepository(pool)
     userService := services.NewUserService(userRepo)
     testService := services.NewTestService(testRepo, userService)
+    gradeService := services.NewGradeService(gradeRepo, userService)
     testHandler := handlers.NewTestHandler(testService)
+    gradeHandler := handlers.NewGradeHandler(gradeService)
 
     // ルーティングの設定
     e.GET("/tests", testHandler.GetTestsHandler)
+    e.GET("/grades/:grade_id", gradeHandler.GetGradeDetailHandler)
 
     // サーバーの起動
     port := os.Getenv("PORT")
