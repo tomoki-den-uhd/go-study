@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 // TeacherTest テスト（教師作成）の構造体
@@ -54,23 +52,5 @@ type StudentTestAnswer struct {
 	IsDeleted      bool   `json:"is_deleted"`
 }
 
-// TestListResponse 小テスト一覧表示用のレスポンス構造体
-type TestListResponse struct {
-	TeacherTestID   int       `json:"teacher_test_id"`
-	Title           string    `json:"title"`
-	Description     string    `json:"description"`
-	DurationMinutes int       `json:"duration_minutes"`
-	CourseTitle     string    `json:"course_title"`
-	SubjectName     string    `json:"subject_name"`
-	TeacherName     string    `json:"teacher_name"`
-	ScheduledAt     time.Time `json:"scheduled_at"`
-	IsDraft         bool      `json:"is_draft"`
-	CreatedAt       time.Time `json:"created_at"`
-	Comment         string    `json:"comment,omitempty"`
-	Score           *int      `json:"score,omitempty"`
-}
 
-// TestRepository テストリポジトリの構造体
-type TestRepository struct {
-	DB *pgx.Conn
-}
+
