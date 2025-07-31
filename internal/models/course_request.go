@@ -28,4 +28,19 @@ type CourseData struct {
 	SubjectID     int       `json:"subject_id"`
 	ScheduledAt   time.Time `json:"scheduled_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+// UpdateCourseRequest 授業更新リクエストの構造体
+type UpdateCourseRequest struct {
+	Title         string    `json:"title" validate:"required"`
+	Description   string    `json:"description" validate:"required"`
+	SubjectID     int       `json:"subject_id" validate:"required"`
+	ScheduledAt   time.Time `json:"scheduled_at" validate:"required"`
+}
+
+// UpdateCourseResponse 授業更新レスポンスの構造体
+type UpdateCourseResponse struct {
+	Status string                 `json:"status"`
+	Info   map[string]interface{} `json:"info"`
+	Data   CourseData             `json:"data"`
 } 

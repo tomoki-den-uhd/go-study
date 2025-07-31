@@ -67,4 +67,72 @@ func (r *CourseRepository) SubjectExists(subjectID int) (bool, error) {
 	}
 	
 	return exists, nil
+}
+
+// GetCourseByID 授業IDで授業を取得する
+func (r *CourseRepository) GetCourseByID(courseID int) (*models.Course, error) {
+	ctx := context.Background()
+	
+	query := `
+		SELECT course_id, title, description, teacher_user_id, subject_id, 
+		       created_at, updated_at, scheduled_at, is_deleted
+		FROM courses 
+		WHERE course_id = $1 AND is_deleted = false
+	`
+	
+	var course models.Course
+	err := r.DB.QueryRow(ctx, query, courseID).Scan(
+		&course.CourseID,
+		&course.Title,
+		&course.Description,
+		&course.TeacherUserID,
+		&course.SubjectID,
+		&course.CreatedAt,
+		&course.UpdatedAt,
+		&course.ScheduledAt,
+		&course.IsDeleted,
+	)
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to get course: %w", err)
+	}
+	
+	return &course, nil
+}
+
+// UpdateCourse 授業を更新する
+func (r *CourseRepository) UpdateCourse(courseID int, course *models.Course) error {
+	ctx := context.Background()
+	
+	// 現在時刻を取得
+	now := time.Now()
+	
+	// SQLクエリを実行
+	query := `
+		UPDATE courses 
+		SET title = $1, description = $2, subject_id = $3, 
+		    scheduled_at = $4, updated_at = $5
+		WHERE course_id = $6 AND is_deleted = false
+	`
+	
+	result, err := r.DB.Exec(ctx, query,
+		course.Title,
+		course.Description,
+		course.SubjectID,
+		course.ScheduledAt,
+		now,
+		courseID,
+	)
+	
+	if err != nil {
+		return fmt.Errorf("failed to update course: %w", err)
+	}
+	
+	// 更新された行数を確認
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("course not found or no changes made")
+	}
+	
+	return nil
 } 

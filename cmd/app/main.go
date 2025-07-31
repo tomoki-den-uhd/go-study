@@ -66,6 +66,7 @@ func main() {
     e.GET("/tests", testHandler.GetTestsHandler)
     e.GET("/grades/:grade_id", gradeHandler.GetGradeDetailHandler)
     e.POST("/courses", courseHandler.CreateCourseHandler)
+    e.PUT("/courses/:course_id", courseHandler.UpdateCourseHandler)
 
     // サーバーの起動
     port := os.Getenv("PORT")
