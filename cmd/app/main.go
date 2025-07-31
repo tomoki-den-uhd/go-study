@@ -1,18 +1,23 @@
 package main
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "os"
+	"context"
+	"fmt"
+	"log"
+	"os"
 
-    "github.com/joho/godotenv"
-    "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/tomoki-den-uhd/go-study/internal/handlers"
+	"github.com/tomoki-den-uhd/go-study/internal/repositories"
+	"github.com/tomoki-den-uhd/go-study/internal/services"
 )
 
 func main() {
     // .env読み込み
-    err := godotenv.Load("../../.env")
+    err := godotenv.Load(".env")
     if err != nil {
         log.Fatalf("Error loading .env file: %v", err)
     }
@@ -36,5 +41,32 @@ func main() {
 
     fmt.Println("Successfully connected to database!")
 
-    // ここでクエリ等を実行可能
+    // Echoインスタンスの作成
+    e := echo.New()
+
+    // ミドルウェアの追加
+    e.Use(middleware.Logger())
+    e.Use(middleware.Recover())
+    e.Use(middleware.CORS())
+
+    // 依存関係の注入
+    userRepo := repositories.NewUserRepository(conn)
+    testRepo := repositories.NewTestRepository(conn)
+    userService := services.NewUserService(userRepo)
+    testService := services.NewTestService(testRepo, userService)
+    testHandler := handlers.NewTestHandler(testService)
+
+    // ルーティングの設定
+    e.GET("/tests", testHandler.GetTestsHandler)
+
+    // サーバーの起動
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+    
+    fmt.Printf("Server starting on port %s...\n", port)
+    if err := e.Start(":" + port); err != nil {
+        log.Fatalf("Failed to start server: %v", err)
+    }
 }
