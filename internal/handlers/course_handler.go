@@ -29,9 +29,8 @@ func (h *CourseHandler) CreateCourseHandler(c echo.Context) error {
 	// ユーザーIDをリクエストヘッダーから取得
 	userID := c.Request().Header.Get("X-User-Id")
 	if userID == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "入力値エラーがあります: X-User-Id header is required",
-		})
+		errorResponse := models.MissingRequiredResponse("X-User-Id")
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
 	// リクエストボディをパース
@@ -45,12 +44,8 @@ func (h *CourseHandler) CreateCourseHandler(c echo.Context) error {
 	c.Request().Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	
 	if err := c.Bind(&request); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"error": "入力値エラーがあります: Invalid request body",
-			"details": err.Error(),
-			"request_body": string(bodyBytes),
-			"content_type": c.Request().Header.Get("Content-Type"),
-		})
+		errorResponse := models.InvalidFormatResponse("request body", err.Error())
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 	
 	// デバッグ用：パースされた構造体の内容をログ出力
@@ -65,17 +60,14 @@ func (h *CourseHandler) CreateCourseHandler(c echo.Context) error {
 		
 		switch {
 		case errorMsg == "認証に失敗しました":
-			return c.JSON(http.StatusUnauthorized, map[string]string{
-				"error": errorMsg,
-			})
+			errorResponse := models.NewErrorResponse(models.ErrorCodeUnauthorized, models.ErrorMessageUnauthorized, "")
+			return c.JSON(http.StatusUnauthorized, errorResponse)
 		case errorMsg == "教科情報が存在しません" || strings.HasPrefix(errorMsg, "入力値エラーがあります"):
-			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": errorMsg,
-			})
+			errorResponse := models.BadRequestResponse(models.ErrorMessageInvalidInput, errorMsg)
+			return c.JSON(http.StatusBadRequest, errorResponse)
 		default:
-			return c.JSON(http.StatusInternalServerError, map[string]string{
-				"error": errorMsg,
-			})
+			errorResponse := models.NewErrorResponse(models.ErrorCodeInternalServer, models.ErrorMessageInternalServer, errorMsg)
+			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 	}
 
@@ -88,17 +80,15 @@ func (h *CourseHandler) UpdateCourseHandler(c echo.Context) error {
 	// パスパラメータから授業IDを取得
 	courseID := c.Param("course_id")
 	if courseID == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "入力値エラーがあります: course_id parameter is required",
-		})
+		errorResponse := models.MissingRequiredResponse("course_id")
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
 	// ユーザーIDをリクエストヘッダーから取得
 	userID := c.Request().Header.Get("X-User-Id")
 	if userID == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "入力値エラーがあります: X-User-Id header is required",
-		})
+		errorResponse := models.MissingRequiredResponse("X-User-Id")
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
 	// リクエストボディをパース
@@ -112,12 +102,8 @@ func (h *CourseHandler) UpdateCourseHandler(c echo.Context) error {
 	c.Request().Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	
 	if err := c.Bind(&request); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"error": "入力値エラーがあります: Invalid request body",
-			"details": err.Error(),
-			"request_body": string(bodyBytes),
-			"content_type": c.Request().Header.Get("Content-Type"),
-		})
+		errorResponse := models.InvalidFormatResponse("request body", err.Error())
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 	
 	// デバッグ用：パースされた構造体の内容をログ出力
@@ -132,25 +118,20 @@ func (h *CourseHandler) UpdateCourseHandler(c echo.Context) error {
 		
 		switch {
 		case errorMsg == "認証に失敗しました":
-			return c.JSON(http.StatusUnauthorized, map[string]string{
-				"error": errorMsg,
-			})
+			errorResponse := models.NewErrorResponse(models.ErrorCodeUnauthorized, models.ErrorMessageUnauthorized, "")
+			return c.JSON(http.StatusUnauthorized, errorResponse)
 		case errorMsg == "教科情報が存在しません" || strings.HasPrefix(errorMsg, "入力値エラーがあります"):
-			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": errorMsg,
-			})
+			errorResponse := models.BadRequestResponse(models.ErrorMessageInvalidInput, errorMsg)
+			return c.JSON(http.StatusBadRequest, errorResponse)
 		case strings.Contains(errorMsg, "you can only update your own courses"):
-			return c.JSON(http.StatusForbidden, map[string]string{
-				"error": "アクセス権限がありません",
-			})
+			errorResponse := models.NewErrorResponse(models.ErrorCodeForbidden, models.ErrorMessageForbidden, "")
+			return c.JSON(http.StatusForbidden, errorResponse)
 		case strings.Contains(errorMsg, "course not found"):
-			return c.JSON(http.StatusNotFound, map[string]string{
-				"error": "授業が見つかりません",
-			})
+			errorResponse := models.NewErrorResponse(models.ErrorCodeNotFound, models.ErrorMessageNotFound, "")
+			return c.JSON(http.StatusNotFound, errorResponse)
 		default:
-			return c.JSON(http.StatusInternalServerError, map[string]string{
-				"error": errorMsg,
-			})
+			errorResponse := models.NewErrorResponse(models.ErrorCodeInternalServer, models.ErrorMessageInternalServer, errorMsg)
+			return c.JSON(http.StatusInternalServerError, errorResponse)
 		}
 	}
 

@@ -48,9 +48,6 @@ func (s *TestService) GetTests(userID string) ([]models.TestListResponse, error)
 		return []models.TestListResponse{}, nil
 	}
 
-	// 必要に応じて結果を整形する
-	// 例：日付のフォーマット、スコアの計算など
-
 	// 結果を返す
 	return tests, nil
 }

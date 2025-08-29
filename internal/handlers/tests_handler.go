@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/tomoki-den-uhd/go-study/internal/models"
 	"github.com/tomoki-den-uhd/go-study/internal/services"
 )
 
@@ -24,17 +25,15 @@ func (h *TestHandler) GetTestsHandler(c echo.Context) error {
 	// ユーザーIDをリクエストヘッダーから取得
 	userID := c.Request().Header.Get("X-User-Id")
 	if userID == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "X-User-Id header is required",
-		})
+		errorResponse := models.MissingRequiredResponse("X-User-Id")
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
 	// サービスクラスを呼び出してテスト一覧を取得
 	tests, err := h.testService.GetTests(userID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": err.Error(),
-		})
+		errorResponse := models.NewErrorResponse(models.ErrorCodeInternalServer, models.ErrorMessageInternalServer, err.Error())
+		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
 	// テストの一覧をJSON形式で返す
