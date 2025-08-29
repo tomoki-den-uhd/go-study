@@ -53,15 +53,20 @@ func main() {
     userRepo := repositories.NewUserRepository(pool)
     testRepo := repositories.NewTestRepository(pool)
     gradeRepo := repositories.NewGradeRepository(pool)
+    courseRepo := repositories.NewCourseRepository(pool)
     userService := services.NewUserService(userRepo)
     testService := services.NewTestService(testRepo, userService)
     gradeService := services.NewGradeService(gradeRepo, userService)
+    courseService := services.NewCourseService(courseRepo, userService)
     testHandler := handlers.NewTestHandler(testService)
     gradeHandler := handlers.NewGradeHandler(gradeService)
+    courseHandler := handlers.NewCourseHandler(courseService)
 
     // ルーティングの設定
     e.GET("/tests", testHandler.GetTestsHandler)
     e.GET("/grades/:grade_id", gradeHandler.GetGradeDetailHandler)
+    e.POST("/courses", courseHandler.CreateCourseHandler)
+    e.PUT("/courses/:course_id", courseHandler.UpdateCourseHandler)
 
     // サーバーの起動
     port := os.Getenv("PORT")
